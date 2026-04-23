@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 
 from .browser import launch
-from .fetcher import CloudflareChallengeError, fetch_event_pdf
+from .fetcher import CloudflareChallengeError, dismiss_cookie_banner, fetch_event_pdf
 from .merger import merge
 from .paths import OUTPUT_ROOT
 from .url import parse
@@ -32,6 +32,8 @@ def setup() -> None:
     with launch(headless=False) as (_, context):
         page = context.new_page()
         page.goto(SETUP_LANDING, wait_until="domcontentloaded", timeout=60000)
+        if dismiss_cookie_banner(page):
+            click.echo("Cookie banner dismissed.")
         try:
             page.wait_for_event("close", timeout=0)
         except Exception:

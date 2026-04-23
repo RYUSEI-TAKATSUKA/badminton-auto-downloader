@@ -9,7 +9,7 @@ from pathlib import Path
 from tkinter import messagebox, scrolledtext, ttk
 
 from .browser import launch
-from .fetcher import CloudflareChallengeError, fetch_event_pdf
+from .fetcher import CloudflareChallengeError, dismiss_cookie_banner, fetch_event_pdf
 from .merger import merge
 from .paths import OUTPUT_ROOT, ensure_dirs
 from .url import parse
@@ -152,6 +152,8 @@ class App:
             with launch(headless=False) as (_, context):
                 page = context.new_page()
                 page.goto(SETUP_LANDING, wait_until="domcontentloaded", timeout=60000)
+                if dismiss_cookie_banner(page):
+                    self._post_log("Cookie 同意バナーを自動で閉じました。")
                 self._post_log("窓を閉じると完了します…")
                 try:
                     page.wait_for_event("close", timeout=0)

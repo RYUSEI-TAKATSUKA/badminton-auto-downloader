@@ -53,6 +53,41 @@ def _check_cloudflare(page: Page) -> None:
         )
 
 
+# Cookie consent banners — try to dismiss before capturing the bracket.
+# Order matters: most specific (BWF uses CookieBot) first, generic last.
+_COOKIE_ACCEPT_SELECTORS = [
+    "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll",
+    "#CybotCookiebotDialogBodyButtonAccept",
+    "#CybotCookiebotDialogBodyLevelButtonAccept",
+    "#onetrust-accept-btn-handler",
+    "button#accept-cookies",
+    "button[aria-label*='accept' i][aria-label*='cookie' i]",
+    "button:has-text('Accept All')",
+    "button:has-text('Accept all')",
+    "button:has-text('I Accept')",
+    "button:has-text('Accept')",
+    "button:has-text('同意する')",
+    "button:has-text('すべて同意')",
+]
+
+
+def dismiss_cookie_banner(page: Page, timeout_ms: int = 4000) -> bool:
+    """Click whichever cookie-accept button shows up first. Returns True if dismissed."""
+    deadline = time.time() + timeout_ms / 1000
+    while time.time() < deadline:
+        for sel in _COOKIE_ACCEPT_SELECTORS:
+            try:
+                loc = page.locator(sel).first
+                if loc.count() > 0 and loc.is_visible():
+                    loc.click(timeout=2000)
+                    page.wait_for_timeout(400)
+                    return True
+            except Exception:
+                continue
+        page.wait_for_timeout(250)
+    return False
+
+
 def _find_print_trigger(page: Page):
     for sel in _PRINT_SELECTORS:
         loc = page.locator(sel).first
@@ -123,6 +158,7 @@ def fetch_event_pdf(
     try:
         page.goto(url, wait_until="domcontentloaded", timeout=45000)
         _check_cloudflare(page)
+        dismiss_cookie_banner(page)
         # Let the SPA render the bracket (icons appear after data load).
         try:
             page.wait_for_load_state("networkidle", timeout=15000)
