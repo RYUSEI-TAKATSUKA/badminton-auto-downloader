@@ -1,0 +1,38 @@
+name: Build Windows .exe
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project + PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller bwf-draw.spec --noconfirm
+
+      - name: Zip distribution folder
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/BWF Draw/*" -DestinationPath "BWF-Draw-windows.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BWF-Draw-windows
+          path: BWF-Draw-windows.zip
+          if-no-files-found: error

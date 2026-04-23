@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bwf-draw"
+version = "0.1.0"
+description = "Download BWF World Tour bracket PDFs (5 events) and merge them into a single file via real Chrome."
+requires-python = ">=3.10"
+dependencies = [
+    "playwright>=1.49",
+    "pypdf>=5.0",
+    "click>=8.1",
+]
+
+[project.scripts]
+bwf-draw = "bwf_draw.cli:main"
+
+[project.gui-scripts]
+bwf-draw-gui = "bwf_draw.gui:main"
+
+[tool.setuptools.packages.find]
+include = ["bwf_draw*"]
